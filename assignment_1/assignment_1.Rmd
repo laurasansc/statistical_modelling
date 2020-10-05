@@ -1,0 +1,68 @@
+---
+title: "Assignment 1"
+author: "Laura Sans, Felix Pacheco, Begoña Bolós"
+date: "10/4/2020"
+output:
+  pdf_document: default
+  html_document: default
+subtitle: 'Statistical Modelling: Theory and Practice'
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+# Import libraries
+library(tidyverse)
+library(ggforce)
+# Set working directory
+wd = "/Users/laurasansc/Desktop/BioinformaticsSystemsBiology/StatisticalModelling"
+```
+
+# Project 1
+## Wind Power Forecast
+
+```{r Read Data}
+setwd(wd)
+raw_wp <- read.csv("project_data/tuno.txt", sep=" ")
+```
+### Summary statistics 
+```{r}
+summary(raw_wp)
+```
+
+### Distribution of wind power production along the time
+```{r distribution production}
+ggplot(data=raw_wp, aes(x=r.day, y=pow.obs)) + geom_point()  + labs(title= "Distribution of wind power production along the time", x = "Days", y="Wind Power Production (kW)")+ theme_classic()
+```
+
+### Probability density function of the Wind Power Production
+```{r density / distribution windpower production}
+ggplot(data = raw_wp, aes(x=pow.obs)) + geom_density()  + labs(title= "Probability density plot of wind power production", y = "Density", x="Wind Power Production (kW)") + theme_classic()
+```
+### Wind Speed vs Wind Power Production
+```{r}
+ggplot(data = raw_wp, aes(x=pow.obs, y=ws30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Speed", x = "Wind Power Production (kW)") + theme_classic()
+
+```
+
+### Wind direction vs Wind Power Production
+```{r}
+ # NOT SUPER INFORMATIVE
+ggplot(data = raw_wp, aes(x=pow.obs, y=wd30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Direction", x = "Wind Power Production (kW)") + theme_classic()
+
+
+# use case when
+
+wp <- raw_wp %>% 
+  mutate(direction = case_when( pi/4 >= wd30  ~ "N", 
+                                (7*pi)/4 < wd30   ~ "N",
+                                (3*pi)/4 >= wd30 & wd30 > pi/4  ~ "W",
+                                (5*pi)/4 >= wd30 & wd30 > (3*pi)/4  ~ "S", 
+                                (7*pi)/4>= wd30 & wd30 > (5*pi)/4 ~ "E"))
+
+
+
+ggplot(data=wp, aes(x=direction, y=pow.obs)) + geom_violin(color=NA, fill="black", alpha= 0.3, draw_quantiles = c(0.25, 0.5, 0.75)) +  geom_sina(color="black", fill=NA) + labs(title= "Wind direction effects on Wind Power Production", x = "Wind Direction", y = "Wind Power Production (kW)") + theme_classic()
+
+
+```
+
