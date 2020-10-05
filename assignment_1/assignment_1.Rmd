@@ -23,17 +23,21 @@ wd = "/Users/laurasansc/github/statistical_modelling/"
 ## WIND POWER FORECAST
 
 ### 1. Descriptive statistics
+
 Set working directory and read the space-separated file
 ```{r Read Data}
 setwd(wd)
 raw_wp <- read.csv("project_data/tuno.txt", sep=" ")
 ```
-#### Summary statistics 
+#### Summary statistics
+
 Below, the summary statistics for the Wind power production (pow.obs), the wind speed  (ws30) and wind direction (wd30). The other three variables are categorical: r-days corresponds to the number of days from the start of the measurement. Month and day correspond to the date of the measurement. The start date is the 1st of January 2003 and the last day is 31st of October 2003, a total of 304 days. 
+
 ```{r}
 summary(raw_wp[c("pow.obs", "ws30", "wd30")])
 ```
 #### Pairs plot of all the data 
+
 ```{r pairs plot}
 wp <- raw_wp %>% mutate_at(vars(month, day), factor)
 
@@ -42,21 +46,25 @@ ggpairs(data = wp[c("r.day","pow.obs", "ws30", "wd30")],)
 
 
 #### Distribution of wind power production along the time
+
 ```{r distribution production}
 ggplot(data=wp, aes(x=r.day, y=pow.obs)) + geom_point()  + labs(title= "Distribution of wind power production along the time", x = "Days", y="Wind Power Production (kW)")+ theme_classic()
 ```
 
 #### Probability density function of the Wind Power Production
+
 ```{r density / distribution windpower production}
 ggplot(data = wp, aes(x=pow.obs)) + geom_density()  + labs(title= "Probability density plot of wind power production", y = "Density", x="Wind Power Production (kW)") + theme_classic()
 ```
 #### Wind Speed vs Wind Power Production
+
 ```{r}
 ggplot(data = wp, aes(x=pow.obs, y=ws30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Speed", x = "Wind Power Production (kW)") + theme_classic()
 
 ```
 
 #### Wind direction vs Wind Power Production
+
 ```{r}
  # NOT SUPER INFORMATIVE
 ggplot(data = wp, aes(x=pow.obs, y=wd30)) + geom_point() + labs(title= "Wind Direction vs Wind Power Production", y = "Wind Direction", x = "Wind Power Production (kW)") + theme_classic()
@@ -78,6 +86,7 @@ ggplot(data=wp, aes(x=direction, y=pow.obs)) + geom_violin(color=NA, fill="black
 
 ```
 #### Other plots with wind direction
+
 ```{r wind speed vs wind direction}
 ggplot(data = wp, aes(y=ws30, x=wd30)) + geom_point() + labs(title= "Wind Speed vs Wind Direction", x = "Wind Direction", y = "Wind Speed") + theme_classic()
 
