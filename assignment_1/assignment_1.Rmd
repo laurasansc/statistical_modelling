@@ -14,7 +14,7 @@ knitr::opts_chunk$set(echo = TRUE)
 library(tidyverse)
 library(ggforce)
 # Set working directory
-wd = "/Users/laurasansc/Desktop/BioinformaticsSystemsBiology/StatisticalModelling"
+wd = "/Users/felix_pacheco/Desktop/DTU/semester3/stats/statistical_modelling"
 ```
 
 # Project 1
@@ -65,4 +65,85 @@ ggplot(data=wp, aes(x=direction, y=pow.obs)) + geom_violin(color=NA, fill="black
 
 
 ```
+
+# Project 2 
+
+We will first read the two dataset and store them as two variables.
+
+## Survival data (Both datasets)
+```{r Read Survival Data}
+setwd(wd)
+raw_logistic <- read.csv("/Users/felix_pacheco/Desktop/DTU/semester3/stats/statistical_modelling/project_data/Logistic.txt", sep="\t")
+
+raw_trial <- read.csv("/Users/felix_pacheco/Desktop/DTU/semester3/stats/statistical_modelling/project_data/actg320.txt", sep="\t")
+raw_trial = raw_trial[c("time", "event", "tx")]
+
+```
+To start with the binary data, we will first compute the probabilities with a frequestist approach that we will compare to the bayesian approach (use of the likelihood.)
+
+We first compute the probabilities using the frequestist approach, in which, a probability is assimilated to a frequency. To do so we simply compute the number of individuals having AIDS divided by the sample size. First when we consider the data without grouping by AZT treatment with probability ($p_0$), then with AZT treatment ($p_1$) and finally without treatment ($p_2$). The calculation can be found bellow :
+
+$p_0 = (25+44)/(170+168) = 0,204142$
+
+$p_1 = 25/170 = 0.1470588$
+
+$p_2 = 44/170 = 0.2619048$
+
+Apparently we would say that the treatment seems to have an effect but further tests should be performed to test the confidence of our hypothesis.
+
+We will now, estimate the probabilities using likelihood approaches with the same groupings as before. 
+```{r Analysis of the binary data}
+
+# ---------- LIKELIHOOD FUNCTION ----------
+Likelihood_binomial <- function(theta, x, n){
+prod(dbinom(prob=theta,x=x, size=n))}
+par(mfrow=c(2,2))
+# -----------------------------------------
+
+# ----- GROUPED DATA BINOMIAL FITTING -----
+# Fit the binomial distribution to the data (same population joint groups).
+# Binomial density parameters without grouping
+
+n = sum(raw_logistic$n)
+x = sum(raw_logistic$AIDS_yes)
+
+# Plot the likelihood for theta [0,1] by 0.01 
+theta <- seq(0,1, by=0.01)
+ll <- sapply(theta, FUN=Likelihood_binomial, x=x, n=n)
+plot(theta,ll, type="l", main="Likelihood of HIV regardless of treatment", ylab="Likelihood")
+
+MLE_groupped = optimize(Likelihood_binomial,c(0.01,0.99),x=x,n=n)$minimum
+
+# -----------------------------------------
+
+# ----- NON-GROUPED DATA BINOMIAL FITTING -----
+# Fit the binomial separately to the two distributions and test if there is a difference between groups.
+
+n_AZT = sum(raw_logistic$n[1])
+n_no_AZT = sum(raw_logistic$n[2])
+x_AZT = sum(raw_logistic$AIDS_yes[1])
+x_no_AZT = sum(raw_logistic$AIDS_yes[2])
+
+# Plot the likelihood for theta [0,1] by 0.01 
+theta <- seq(0,1, by=0.01)
+ll_AZT <- sapply(theta, FUN=Likelihood_binomial, x=x_AZT, n=n_AZT)
+MLE_AZT = optimize(Likelihood_binomial,c(0.01,0.99),x=x_AZT,n=n_AZT)$minimum
+
+ll_no_AZT <- sapply(theta, FUN=Likelihood_binomial, x=x_no_AZT, n=n_no_AZT)
+plot(theta,ll_AZT, type="l", main="Likelihood of HIV under AZT treatment", ylab="Likelihood")
+plot(theta,ll_no_AZT, type="l", main="Likelihood of HIV under no AZT treatment", ylab = "Likelihood")
+
+MLE_no_AZT = optimize(Likelihood_binomial,c(0.01,0.99),x=x_no_AZT,n=n_no_AZT)$minimum
+```
+
+We can observe that the likelihood maximum estimate (MLE) of every case corresponds to the frequestists approach. Additionally, we get a sense of how much uncertainty we are facing since we can see how the curvature of the function is. 
+
+```{r}
+# Test if there is a difference (We will refer to chapter 4.3)
+
+
+# Estimate parameters in the model (p_0 probability of AIDS in control group, p_1 probability of AIDS in treatment group).
+
+```
+
 
