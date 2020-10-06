@@ -3,8 +3,8 @@ title: "Assignment 1"
 author: "Laura Sans, Felix Pacheco, Begoña Bolós"
 date: "10/4/2020"
 output:
-  pdf_document: default
   html_document: default
+  pdf_document: default
 subtitle: 'Statistical Modelling: Theory and Practice'
 ---
 
@@ -13,46 +13,72 @@ knitr::opts_chunk$set(echo = TRUE)
 # Import libraries
 library(tidyverse)
 library(ggforce)
+library("GGally") 
+
 # Set working directory
+<<<<<<< HEAD
 wd = "/Users/felix_pacheco/Desktop/DTU/semester3/stats/statistical_modelling"
+=======
+wd = "/Users/laurasansc/github/statistical_modelling/"
+>>>>>>> 539717dccfc6a58056593d293c7a828acb5f576d
 ```
 
 # Project 1
-## Wind Power Forecast
+## WIND POWER FORECAST
 
+### 1. Descriptive statistics
+
+Set working directory and read the space-separated file
 ```{r Read Data}
 setwd(wd)
 raw_wp <- read.csv("project_data/tuno.txt", sep=" ")
 ```
-### Summary statistics 
+
+#### Summary statistics
+
+Below, the summary statistics for the Wind power production (pow.obs), the wind speed  (ws30) and wind direction (wd30). The other three variables are categorical: r-days corresponds to the number of days from the start of the measurement. Month and day correspond to the date of the measurement. The start date is the 1st of January 2003 and the last day is 31st of October 2003, a total of 304 days. 
+
 ```{r}
-summary(raw_wp)
+summary(raw_wp[c("pow.obs", "ws30", "wd30")])
+```
+#### Pairs plot of all the data 
+
+```{r pairs plot}
+wp <- raw_wp %>% mutate_at(vars(month, day), factor)
+
+ggpairs(data = wp[c("r.day","pow.obs", "ws30", "wd30")],)
 ```
 
-### Distribution of wind power production along the time
+
+#### Distribution of wind power production along the time
+
 ```{r distribution production}
-ggplot(data=raw_wp, aes(x=r.day, y=pow.obs)) + geom_point()  + labs(title= "Distribution of wind power production along the time", x = "Days", y="Wind Power Production (kW)")+ theme_classic()
+ggplot(data=wp, aes(x=r.day, y=pow.obs)) + geom_point()  + labs(title= "Distribution of wind power production along the time", x = "Days", y="Wind Power Production (kW)")+ theme_classic()
 ```
 
-### Probability density function of the Wind Power Production
+#### Probability density function of the Wind Power Production
+
 ```{r density / distribution windpower production}
-ggplot(data = raw_wp, aes(x=pow.obs)) + geom_density()  + labs(title= "Probability density plot of wind power production", y = "Density", x="Wind Power Production (kW)") + theme_classic()
+ggplot(data = wp, aes(x=pow.obs)) + geom_density()  + labs(title= "Probability density plot of wind power production", y = "Density", x="Wind Power Production (kW)") + theme_classic()
 ```
-### Wind Speed vs Wind Power Production
+
+#### Wind Speed vs Wind Power Production
+
 ```{r}
-ggplot(data = raw_wp, aes(x=pow.obs, y=ws30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Speed", x = "Wind Power Production (kW)") + theme_classic()
+ggplot(data = wp, aes(x=pow.obs, y=ws30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Speed", x = "Wind Power Production (kW)") + theme_classic()
 
 ```
 
-### Wind direction vs Wind Power Production
+#### Wind direction vs Wind Power Production
+
 ```{r}
  # NOT SUPER INFORMATIVE
-ggplot(data = raw_wp, aes(x=pow.obs, y=wd30)) + geom_point() + labs(title= "Wind Speed vs Wind Power Production", y = "Wind Direction", x = "Wind Power Production (kW)") + theme_classic()
+ggplot(data = wp, aes(x=pow.obs, y=wd30)) + geom_point() + labs(title= "Wind Direction vs Wind Power Production", y = "Wind Direction", x = "Wind Power Production (kW)") + theme_classic()
 
 
 # use case when
 
-wp <- raw_wp %>% 
+wp <- wp %>% 
   mutate(direction = case_when( pi/4 >= wd30  ~ "N", 
                                 (7*pi)/4 < wd30   ~ "N",
                                 (3*pi)/4 >= wd30 & wd30 > pi/4  ~ "W",
@@ -66,6 +92,7 @@ ggplot(data=wp, aes(x=direction, y=pow.obs)) + geom_violin(color=NA, fill="black
 
 ```
 
+<<<<<<< HEAD
 # Project 2 
 
 We will first read the two dataset and store them as two variables.
@@ -144,6 +171,121 @@ We can observe that the likelihood maximum estimate (MLE) of every case correspo
 
 # Estimate parameters in the model (p_0 probability of AIDS in control group, p_1 probability of AIDS in treatment group).
 
+=======
+#### Other plots with wind direction
+
+```{r wind speed vs wind direction}
+ggplot(data = wp, aes(y=ws30, x=wd30)) + geom_point() + labs(title= "Wind Speed vs Wind Direction", x = "Wind Direction", y = "Wind Speed") + theme_classic()
+
+
+ggplot(data=wp, aes(x=direction, y=ws30)) + geom_violin(color=NA, fill="black", alpha= 0.3, draw_quantiles = c(0.25, 0.5, 0.75)) +  geom_sina(color="black", fill=NA) + labs(title= "Wind direction vs Wind Speed", x = "Wind Direction", y = "Wind Speed") + theme_classic()
+
+
+
+ggplot(data = wp, aes(x=pow.obs, fill=direction, color = direction)) + geom_density(alpha =0.2)  + labs(title= "Probability density plot of wind power production", y = "Density", x="Wind Power Production (kW)") + theme_classic() + theme(legend.position="bottom")
+
+# summary by direction
+wp %>%  group_by(direction) %>% count()
+wp %>%  group_by(direction) %>% summarise(max = max(pow.obs))
+```
+
+### 2. Simple models
+
+# Project 2
+## SURVIVAL DATA
+
+
+
+
+
+# Project 3
+## FINANCIAL DATA
+### 1. Descriptive statistics and simple models
+
+Set working directory and read the space-separated file
+Do negative value handling if we want to apply box-cox. 
+
+```{r Read Data}
+setwd(wd)
+raw_finance <- read.csv("project_data/finance_data.csv", sep=";")
+
+finance <- cbind(num_week = rownames(raw_finance), raw_finance)
+rownames(finance) <- 1:nrow(finance)
+
+finance <- finance %>%  mutate(num_week = as.numeric(num_week)) 
+
+finance <- finance %>%  mutate(volatility= sqrt((SLV - mean(SLV))^2)/sum(sqrt((SLV - mean(SLV))^2)))
+
+```
+
+**1. Present the data, estimate the parameters in a normal model, and asses if the normal model is appropriate.**
+
+```{r present data}
+# Summary of SLV
+summary(finance)
+# Distribution plot (normal distribution)
+ggplot(data = finance, aes(x=num_week, y=SLV)) + geom_point()  + labs(title= "Distribution of weekly returns production along the time", x = "Weeks", y="")+ theme_classic()
+# Density plot
+ggplot(data = finance, aes(x=SLV)) + geom_density()  + labs(title= "Probability density plot of SLV", y = "Density", x="SLV") + theme_classic()
+
+y <- finance %>% pull(SLV)
+x <- finance %>% pull(volatility)
+# Observe the QQ plots We can see that the distribution is already as we suspected very approximate to normal distribution.
+
+par(mfrow=c(1,2))
+qqnorm(y)
+qqline(y)
+qqnorm(x)
+qqline(x)
+
+# Distribution plot (normal distribution)
+ggplot(data = finance, aes(x=num_week, y=volatility)) + geom_point()  + labs(title= "Distribution Volatility", x = "Weeks", y="")+ theme_classic()
+# Density plot
+ggplot(data = finance, aes(x=volatility)) + geom_density()  + labs(title= "Probability density plot of Volatility", y = "Density", x="Volatility") + theme_classic()
+
+```
+```{r}
+## profile likelihood for lambda
+lp.lambda <- function(lambda,y){
+    n <- length(y)
+    y.l <- bc.trans(lambda ,y)
+    sigmasq <- 1/n * sum((y.l-mean(y.l))^2)
+    -n/2 * log(sigmasq) + (lambda-1)*sum(log(y))
+}
+
+par(mfrow=c(1,2))
+## Plot the profile likelihood
+lambda <- seq(6e-06,0.02,by=0.0001)
+
+## Directly in R
+library(MASS)
+boxcox(lm(x~1),lambda=lambda)
+## and finally we could optimize it
+optimization <- optimize(lp.lambda,c(-2,2),y=x,maximum=TRUE)
+lambda_opt <- optimization$maximum
+lambda_opt
+```
+We now apply the transformation to the volatility after the box-cox transformation and obtaining the maximum optimized lambda. 
+
+$$y_{\lambda} = \frac{y^{\lambda}-1}{\lambda}$$
+```{r}
+finance <- finance %>% mutate(volatility_t = (volatility^lambda_opt - 1)/lambda_opt)
+
+# Distribution plot (normal distribution)
+ggplot(data = finance, aes(x=num_week, y=volatility_t)) + geom_point()  + labs(title= "Distribution of volatility transformed", x = "Weeks", y="")+ theme_classic()
+# Density plot
+ggplot(data = finance, aes(x=volatility_t)) + geom_density()  + labs(title= "Probability density plot of Volatility Transformed", y = "Density", x="Volatility Transformed") + theme_classic()
+```
+
+
+
+
+```{r}
+# generate a general linear model
+lm1 <- lm(SLV ~ volatility, finance)
+
+anova(lm1)
+>>>>>>> 539717dccfc6a58056593d293c7a828acb5f576d
 ```
 
 
