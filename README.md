@@ -10,3 +10,5 @@ Each of the projects has a initial data set, an R script, some results and a pow
 | HIV Survival Data      | []()   | []()       |
 | Financial data         | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/finance.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/project/FinancialData_02418.pdf)       |
 
+
+The authors of this project are Felix Pacheco (), Begoña Bolós () and Laura Sans (laurasansc@gmail.com).
