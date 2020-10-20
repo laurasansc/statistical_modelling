@@ -8,9 +8,7 @@ require("xtable")
 # -----------------------------------------------------------------
 # READ THE DATA
 # -----------------------------------------------------------------
-wd <- "Users/laurasansc/github/statistical_modelling/"
-setwd(wd)
-raw_finance <- read.csv("project_data/finance_data.csv", sep = ";")
+raw_finance <- read.csv("/Users/laurasansc/github/statistical_modelling/data/finance_data.csv", sep = ";")
 
 # -----------------------------------------------------------------
 # WRANGLE DATA
@@ -49,12 +47,12 @@ p2 <- ggplot(data = finance, aes(x = SLV)) +
 
 # Final plot
 # save plot to file without using ggsave
-png("initial_plot.png",width=1800, height=900, res=300)
+png("/Users/laurasansc/github/statistical_modelling/plots/initial_plot.png",width=1800, height=900, res=300)
 grid.arrange(p1, p2, nrow = 1)
 dev.off()
 
 # Observe the QQ plots We can see that the distribution is already as we suspected very approximate to normal distribution.
-png("qq_plot.png",width=1000, height=1000, res=300)
+png("/Users/laurasansc/github/statistical_modelling/plots/qq_plot.png",width=1000, height=1000, res=300)
 par(mfrow = c(1, 1))
 qqnorm(finance$SLV)
 qqline(finance$SLV)
@@ -108,6 +106,6 @@ p3 <- ggplot(data = finance, aes(x = SLV)) +
   theme_classic() +
   theme(plot.title = element_text(size=12), axis.title.x=element_text(size=10), axis.title.y=element_text(size=10)) 
 
-png("final_plot.png",width=1500, height=1000, res=300)
+png("/Users/laurasansc/github/statistical_modelling/plots/final_plot.png",width=1500, height=1000, res=300)
 p3
 dev.off()
