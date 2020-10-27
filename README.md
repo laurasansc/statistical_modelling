@@ -7,7 +7,7 @@ Each of the projects has a initial data set, an R script, some results and a pow
 | Project                | Script | Slides |
 | ---------------------- | ------ | ---------- |
 | Wind Energy Production | []()   | []()       |
-| HIV Survival Data      | []()   | []()       |
+| HIV Survival Data      | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/survival.R)   | []()       |
 | Financial data         | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/finance.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/FinancialData_02418.pdf)       |
 
 
