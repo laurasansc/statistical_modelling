@@ -2,7 +2,7 @@
 
 The project of this course is divided in three sub-projects: Wind Energy data, HIV Survival Data and Financial Data. 
 
-Each of the projects has a initial data set, an R script, some results and a powerpoint presentation explaining the project and the obtained results. 
+Each of the projects has a initial data set, an R script, some results and slides  explaining the project and the obtained results. 
 
 | Project                | Script | Slides |
 | ---------------------- | ------ | ---------- |
