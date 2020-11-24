@@ -80,7 +80,6 @@ nll.cauchy <- function(pars,x){
   -sum(dcauchy(x,location = pars[1],scale = pars[2],log=TRUE))
 }
 
-
 opt <- nlminb(c(median(finance$SLV),2), nll.cauchy, lower=c(-Inf,0), x = finance$SLV)
 
 opt

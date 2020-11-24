@@ -13,6 +13,9 @@ raw_logistic <- read.csv("/Users/laurasansc/github/statistical_modelling/data/Lo
 raw_trial <- read.csv("/Users/laurasansc/github/statistical_modelling/data/actg320.txt", sep = "\t")
 
 # -----------------------------------------------------------------
+# ASSIGNMENT 1
+# -----------------------------------------------------------------
+# -----------------------------------------------------------------
 # PRESENT THE DATA - LOGISTIC DATA
 # -----------------------------------------------------------------
 # PRINT TABLE
@@ -89,7 +92,6 @@ ggplot(likelihoods, aes(x = theta)) +
   scale_colour_manual(name = "Treatment/No treatment", values = c("Both" ="red", "yes AZT" ="blue", "no AZT" = "green")) +
   theme(plot.title = element_text(size = 12), axis.title.x = element_text(size = 9), axis.title.y = element_text(size = 8),legend.position="bottom")
 dev.off()
-
 
 
 # -----------------------------------------------------------------
