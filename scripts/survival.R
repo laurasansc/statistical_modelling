@@ -229,7 +229,7 @@ logrank
 
 
 # -----------------------------------------------------------------
-# DESCRIPTIVE STATISTICS
+# ANALYSIS
 # -----------------------------------------------------------------
 # parametric survival models containing treatment (tx) and CD4 count (cd4) as explanatory variables
 # Exponential
