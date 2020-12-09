@@ -146,11 +146,11 @@ exp(c(coef(mod1)[2],confint(mod1)[2,]))
 
 # Wald test
 z <- mod1$coefficients[2] / coef(summary(mod1))[2,2]
-
+# Estimate x (tx) / stdE  estimate x (tx)
 1 - pnorm(q = abs(z))
 
 # Likelihood ratio test - formula
-Q <- 2 * (logLik(mod1)-logLik(mod2))
+Q <-  2 * (logLik(mod1)-logLik(mod2))
 pvalue <- 1 - pchisq(q=Q, df=1)
 pvalue
 
@@ -227,54 +227,93 @@ survival$tx <- as.factor(survival$tx)
 logrank <- logrank_test(Surv(time, event==1) ~ tx, data = survival)
 logrank
 
+### PLOT EVENT 
+
+surv.event <- survfit(Surv(time, tx == 1) ~ event,
+                   conf.type = "log-log", data = survival, type="kaplan-meier")
+
+summary(surv.event)
+
+png("/Users/laurasansc/github/statistical_modelling/plots/survival_survival_plot_event.png",width=1200, height=900, res=150)
+plot(surv.event, conf.int = TRUE, las = 1, xlab = "time",
+     ylab = "Estimated Survival Prob.", col=2:3,
+     lwd = 2, mark.time=TRUE, ylim = c(0.75,1))
+legend("bottomleft", col=2:3, c("Event","No event"), lwd=2,adj = c(0, 1))
+
+dev.off()
+
+# Cumulative incidence
+png("/Users/laurasansc/github/statistical_modelling/plots/survival_cuminc_plot_event.png",width=1200, height=900, res=150)
+plot(surv.event, fun=function(x) { 1- x}, conf.int = T,
+     las = 1, xlab = "Days since admission",
+     ylab = "Estimated Failure Prob.", col=2:3, lwd = 2)
+legend("topleft", col=2:3, c("Event","No event"), lwd=2,adj = c(0, 1))
+dev.off()
 
 # -----------------------------------------------------------------
 # ANALYSIS
 # -----------------------------------------------------------------
 # parametric survival models containing treatment (tx) and CD4 count (cd4) as explanatory variables
-# Exponential
+# --------- Exponential ---------------
 mod_exponential <- survreg(Surv(time, event==1) ~ cd4 + tx, data = survival,
                            dist="exponential")
 summary(mod_exponential)
-confint(mod_exponential)
+confint.exp <- confint(mod_exponential)
+
+# model prediction plot
+pct.exp <- 1:98/100   # The 100th percentile of predicted survival is at +infinity
+ptime.exp <- predict(mod_exponential,  type='quantile',
+                 p=pct.exp, se=TRUE)
+plot(x=ptime.exp$fit[1,], y=1-pct.exp, type="l", title="Exponential function predicted survival", xlab="Time", ylab="Predicted survival")
 
 # Goodness of fit of the exponential model
 survival$CoxSnell <- survival$time*exp(-mod_exponential$linear.predictors)
 surv2 <- survfit(Surv(CoxSnell, event==1)~1 , data = survival)
 
-png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_1.png",width=1200, height=900, res=150)
+png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_exp.png",width=1200, height=900, res=150)
 plot(surv2$time, -log(surv2$surv))
 abline(a=0, b=1)
 dev.off()
 
-# Weibull
+# --------- Weibull -----------------
 mod_weibull <- survreg(Surv(time, event==1) ~ cd4 + tx, data = survival,
                        dist="weibull")
 summary(mod_weibull)
-confint(mod_weibull)
+confint.wb <- confint(mod_weibull)
+# model prediction plot
+pct.wb <- 1:98/100   # The 100th percentile of predicted survival is at +infinity
+ptime.wb <- predict(mod_weibull,  type='quantile',
+                     p=pct.wb, se=TRUE)
+plot(x=ptime.wb$fit[1,], y=1-pct.wb, type="l", xlab="Time", ylab="Predicted survival")
 
 # Goodness of fit of the weibull model
 survival$CoxSnell <- exp((log(survival$time)-mod_weibull$linear.predictors)/mod_weibull$scale)
 surv3 <- survfit(Surv(CoxSnell, event==1)~1 , data = survival)
 
-png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_2.png",width=1200, height=900, res=150)
+png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_wb.png",width=1200, height=900, res=150)
 plot(surv3$time, -log(surv3$surv))
 abline(a=0, b=1)
 dev.off()
 
-# Log-logistic
+# --------- Log-logistic -----------------
 mod_loglogistic <- survreg(Surv(time, event==1) ~ cd4 + tx, data = survival,
                            dist="loglogistic")
 summary(mod_loglogistic)
-confint(mod_loglogistic)
+confint.log<- confint(mod_loglogistic)
+
+# model prediction plot
+pct.log <- 1:98/100   # The 100th percentile of predicted survival is at +infinity
+ptime.log <- predict(mod_loglogistic,  type='quantile',
+                    p=pct.log, se=TRUE)
+plot(x=ptime.log$fit[1,], y=1-pct.log, type="l", xlab="Time", ylab="Predicted survival")
 
 # Goodness of fit of the log logistic model
 survival$z <- (log(survival$time)-mod_loglogistic$linear.predictors)/mod_loglogistic$scale 
 survival$CoxSnell <- log(1+exp(survival$z)) # do log log here
 surv4 <- survfit(Surv(CoxSnell, event==1)~1 , data = survival)
 
-png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_3.png",width=1200, height=900, res=150)
-plot(surv4$time, -log(surv4$surv), ylab="Survival ", xlab="Time")
+png("/Users/laurasansc/github/statistical_modelling/plots/survival_diagnostic_log.png",width=1200, height=900, res=150)
+plot(surv4$time, -log(surv4$surv))
 abline(a=0, b=1)
 dev.off()
 
@@ -310,6 +349,8 @@ exp(cbind(TR=coef(mod_loglogistic)[2]*50,"2,5 %"=confint(mod_loglogistic)[2, 1]*
 # The estimated hazard ratio and confidence interval are
 hr <- round(exp(cbind(HR = -coef(mod_loglogistic),-confint(mod_loglogistic)[,2:1])),4)
 print(xtable(hr))
+
+exp(cbind(HR=-coef(mod_loglogistic)[2]*50,"2,5 %"=-confint(mod_loglogistic)[2, 1]*50, "97,5 %"= -confint(mod_loglogistic)[2, 2]*50))
 
 # Cox-snell residuals plot 
 # Goodness of fit of the log logistic model
@@ -357,10 +398,9 @@ S40 <- (1+exp(z40))^-1
 yrange <- range(S41)
 
 par(mfrow = c(1, 1))
-plot.new()
 png("/Users/laurasansc/github/statistical_modelling/plots/survival_survprob.png",width=1200, height=900, res=150)
 plot(xrange, yrange, type="n", xlab="Time to event",
-     ylab="Probability of survival (tx=1, cd4=(35,75,135)",las=1) 
+     ylab="Probability of survival (tx=1, cd4=(35,75,135)",las=1, ylim = c(0.75,1.5)) 
 #PLOT THE SURVIVAL FUNCTIONS
 lines(t, S42, type="l", col=1, lty=2, lwd=2)
 lines(t, S41, type="l", col=2, lwd=2)
