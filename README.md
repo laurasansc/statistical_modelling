@@ -6,9 +6,9 @@ Each of the projects has a initial data set, an R script, some results and slide
 
 | Project                | Script | Slides |
 | ---------------------- | ------ | ---------- |
-| Wind Energy Production | []()   | []()       |
-| HIV Survival Data      | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/survival.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/SurvivalData_02418.pdf)       |
-| Financial data         | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/finance.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/FinancialData_02418.pdf)       |
+| Wind Energy Production | []()   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/wind.pdf)      |
+| HIV Survival Data      | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/survival.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/survival.pdf)       |
+| Financial data         | [R script](https://github.com/laurasansc/statistical_modelling/blob/main/scripts/finance.R)   | [PDF](https://github.com/laurasansc/statistical_modelling/blob/main/slides/financial.pdf)       |
 
 
 The authors of this project are Felix Pacheco (), Begoña Bolós () and Laura Sans (laurasansc@gmail.com).
