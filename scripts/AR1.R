@@ -82,7 +82,6 @@ norm.HMM.mle.nlminb <- function(x,m,mu0,sigma20,gamma0,...)
   mod      <- nlminb(parvect0,norm.HMM.mllk,x=x,m=m,
                      lower=lower,upper=upper)
   if(mod$convergence!=0){
-    print(mod)
   }
   pn       <- norm.HMM.pw2pn(m,mod$par)
   mllk     <- mod$objective

@@ -168,17 +168,20 @@ pois.HMM.state_prediction <-
 
 # check this one for mle and change what needed to do forecasting
 
-pois.HMM.forecast <- function(x,m,lambda,gamma, 
+norm.HMM.forecast <- function(x,m,mu,sigma2,gamma, 
                               delta=NULL,xrange=NULL,H=1,...)          
 {                                               
   if(is.null(delta))                             
     delta<-solve(t(diag(m)-gamma+1),rep(1,m))   
   if(is.null(xrange))                            
-    xrange<-qpois(0.001,min(lambda)):        
-      qpois(0.999,max(lambda))         
-  n        <- length(x)                          
-  allprobs <- outer(x,lambda,dpois)              
-  allprobs <- ifelse(!is.na(allprobs),allprobs,1)   
+    xrange<-qnorm(0.001,min(mu)):        
+      qnorm(0.999,max(mu))         
+  n        <- length(x)
+  allprobs   <- matrix(nrow = n, ncol = m)
+  for (j in 1:m){
+    allprobs[,j] = dnorm(x, mu[j], sigma2[j])
+  }
+  allprobs   <- ifelse(!is.na(allprobs),allprobs,1)
   foo      <- delta*allprobs[1,]                 
   sumfoo   <- sum(foo)                           
   lscale   <- log(sumfoo)                        
@@ -196,7 +199,10 @@ pois.HMM.forecast <- function(x,m,lambda,gamma,
     foo    <- foo%*%gamma                        
     xi[,i] <- foo                                
   }                                            
-  allprobs <- outer(xrange,lambda,dpois)         
+  allprobs   <- matrix(nrow = n, ncol = m)
+  for (j in 1:m){
+    allprobs[,j] = dnorm(x, mu[j], sigma2[j])
+  }  
   fdists   <- allprobs%*%xi[,1:H]                
   list(xrange=xrange,fdists=fdists)              
 }                                               

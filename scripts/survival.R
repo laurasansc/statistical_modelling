@@ -207,7 +207,7 @@ png("/Users/laurasansc/github/statistical_modelling/plots/survival_survival_plot
 plot(surv.tx, conf.int = TRUE, las = 1, xlab = "time",
      ylab = "Estimated Survival Prob.", col=2:3,
      lwd = 2, mark.time=TRUE, ylim = c(0.75,1))
-legend("bottomleft", col=2:3, c("Treatment","No treatment"), lwd=2,adj = c(0, 1))
+legend("bottomleft", col=2:3, c("No Treatment","Treatment"), lwd=2,adj = c(0, 1))
 
 dev.off()
 
@@ -216,7 +216,7 @@ png("/Users/laurasansc/github/statistical_modelling/plots/survival_cuminc_plot.p
 plot(surv.tx, fun=function(x) { 1- x}, conf.int = T,
      las = 1, xlab = "Days since admission",
      ylab = "Estimated Failure Prob.", col=2:3, lwd = 2)
-legend("topleft", col=2:3, c("Treatment","No treatment"), lwd=2,adj = c(0, 1))
+legend("topleft", col=2:3, c("No treatment","Treatment"), lwd=2,adj = c(0, 1))
 dev.off()
 
 # Log-rank test
@@ -368,16 +368,15 @@ abline(a=0, b=1)
 survival$cd4grp <- cut(survival$cd4,breaks = c(min(survival$cd4), 35, 75, 137, max(survival$cd4)))
 summary(survival[,c("cd4", "cd4grp")])
 
-surv.cd4 <- survfit(Surv(time, event == 1) ~ cd4grp,
-                    conf.type = "log-log", data = survival, type="kaplan-meier")
-
+surv.cd4 <- survfit(Surv(time, event == 1) ~ cd4grp ,
+                    conf.type = "log-log", data = survival, type="log-logistic")
 png("/Users/laurasansc/github/statistical_modelling/plots/survival_kaplan_final.png",width=1200, height=900, res=150)
 par(mfrow = c(1, 2))
 plot(surv.cd4, conf.int = F, las = 1, xlab = "Days since admission", ylab = "Estimated Survival Prob.", col=2:5, lwd = 2, ylim = c(0.75,1))
-legend("bottomleft", col=2:5,title= "CD4", c("0-34","35-74","75-137","137+"),lwd=2,adj = c(0, 1))
+legend("bottomleft", col=2:5,title= "CD4", c("0-34","35-74","75-137","137+"),lwd=2,adj = c(0, 0.6))
 
 plot(surv.tx, conf.int = F , las = 1, xlab = "Days since admission", ylab = "Estimated Survival Prob.", col=2:3, lwd = 2, ylim = c(0.75,1))
-legend("bottomleft", col=2:5, c("Treatment","No treatment"),lwd=2,adj = c(0, 1))
+legend("bottomleft", col=2:5, c("No treatment","Treatment"),lwd=2,adj = c(0,1))
 dev.off()
 
 # More model representation

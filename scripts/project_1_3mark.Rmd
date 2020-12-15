@@ -1,0 +1,480 @@
+---
+title: "project_1_3_mark"
+output: pdf_document
+---
+##################################
+#### From previous assigments ####
+##################################
+
+- we transformed y (power) with lambda == 0.26 ...
+- we did a fitting of the formula below 
+
+$$y^{\lambda} =  \beta_0 + \beta_1ws + \beta_2ws^2$$ 
+
+```{r setup, include=FALSE}
+
+# Import libraries
+#install.packages("betareg")
+library(circular)
+library(tidyverse)
+library(ggforce)
+library("GGally")
+library(numDeriv)
+library(mvtnorm)
+```
+
+```{r}
+# Remove all variables from work space
+rm(list=ls())
+# Read the data
+dat <- read.table("/Users/laurasansc/github/statistical_modelling/data/tuno.txt", header= T)
+```
+
+```{r}
+#normalize the data of power production
+min <- 0
+max <- 5000
+normPow <- (dat$pow.obs-min)/(max-min)
+```
+
+Given the results in assigment one we will generate a model with lambda-transformed power (that follows a normal distribution). Where lambda == 0.2620668
+
+```{r}
+lambda <- 0.2
+y.trans <- (1/lambda)*log((normPow^lambda)/(1-normPow^lambda))
+par(mfrow=c(1,2))
+plot(dat$ws30,y.trans,xlab='Predicted wind speed (m/s)',
+     ylab='Transformed Generated power (kW)',type='n')
+points(dat$ws30,y.trans,cex=.6)
+title(expression('(b) Power generated vs wind speed'))
+
+qqnorm(y.trans)
+qqline(y.trans)
+```
+
+```{r}
+fitlm1 <- lm(y.trans ~ dat$ws30 + I(dat$ws30^2),
+            data = dat, family="Gaussian")
+summary(fitlm1)
+par(mfrow=c(2,2))
+plot(fitlm1)
+```
+
+#####################
+#### Assigment 3 ####
+#####################
+
+Analysis of autocorrelation
+
+$$ \epsilon = \phi\epsilon_{i-1} + u_{i}; \epsilon \sim N(0, \sigma^2_{u}) $$
+Take the dataframe with the day and the power 
+
+```{r}
+res <- fitlm1$residuals
+n = length(res)
+e = matrix(c(res[-n]), res[-1], nrow = n-1, ncol= 2)
+```
+
+```{r}
+# res_vec <- residuals(fitlm1)
+# res_len <- length(res_vec)
+# res_mat <- cbind(res_vec[1:res_len-1], res_vec[2:res_len])
+# tres_mat <- t(res_mat)
+# 
+# phi_mat <- cor(res_mat)  # Phi values are diagonally [1,2] or [2, 1]
+# sigma <- var(res_vec) * (1 - phi_mat[1, 2]^2)
+# print(sigma)
+# print(phi_mat[1,2])
+```
+
+
+After the plots, there is autocorrelation, some exponantial decay, that means we can use AR(1)
+
+1. Extract the residuals from the linear model given above, and construc
+the matrix
+$$ \epsilon = \begin{pmatrix} \epsilon_1 & \epsilon_2  \\ . & . \\ . & . \\ \epsilon_{n-1}  & \epsilon_{n}  \end{pmatrix}$$
+
+
+2. Fit parameters in the model
+(mixture distribution with several normal distributions)
+$$ [\epsilon_i, \epsilon_{i+1}]^T   \sim N(0, \sum); \sum = \sigma^2 \begin{pmatrix} 1 & p \\ p & 1 \end{pmatrix}$$
+```{r}
+library(repr)
+library(MASS)
+library(dplyr)
+library(lmtest)
+library(cowplot)
+library(ggplot2)
+library(circular)
+library(mvtnorm)
+library(gridExtra)
+library(ggcorrplot)
+library(numDeriv)
+```
+
+• Parameter estimates and Wald confidence intervals
+• A contour plot of the likelihood with contour line indicating confidence
+regions
+• P-values for the likelihood ratio test and wald test for the hypothesis
+H0 : p = 0 against the alternative.
+
+```{r}
+# Fit with a normal model
+nll_norm <- function(par, y){
+  sigma2 = par[1]
+  rho = par[2]
+  mat_sigma = matrix(sigma2 * c(1,rho,rho,1), nrow = 2, ncol = 2)
+  n = dim(y)[1]
+  sum_i <- sum(apply(y, 1, function(x) (matrix(x,1,2))%*%solve(mat_sigma)%*%t(matrix(x,1,2))))
+  n/2 * log(det(mat_sigma)) + 1/2 * sum_i
+}
+cor(e[-1],e[-length(e)])
+opt <- nlminb(c(0.1,0), nll_norm, y = e, lower = c(0.001, -1), upper = c(100, 5))
+optnlm <- nlm(p = c(0.1,0), f = nll_norm, y = e, hessian = TRUE)
+h = optnlm$hessian
+
+opt$par[1] ##signma2
+opt$par[2]
+
+opt
+print("with nlm")
+optnlm
+# nll2 <- function(theta, y) {
+#     # Same as above but using mvtnorm
+#     sigma <- matrix(c(1, theta[2], theta[2], 1),nrow=2) * theta[1]
+#     -sum(log(dmvnorm(y, mean=c(0,0), sigma=sigma)))
+# }
+# 
+# opt <- nlminb(c(2,0.5),nll2,y=res_mat,lower=c(0,-1),upper=c(Inf,1))
+# H_ar <- hessian(nll2, opt$par, y=res_mat)
+# W_ar <- uncertainty_assesment(opt, H_ar)
+# colnames(W_ar) <- c("Sigma", "Phi")
+# print(W_ar)
+#### Alex
+
+```
+
+```{r}
+uncertainty_assesment <- function(fit, H, threshold=0.05) {
+    # Standard Error of parameters
+    Se.par <- sqrt(diag(solve(H)))
+    Wald.par <- rbind(
+        fit$par,
+        Se.par,
+        fit$par - qnorm(1-threshold/2) * Se.par,
+        fit$par + qnorm(1-threshold/2) * Se.par
+    )
+    rownames(Wald.par) <- c("Estimate", "Sd Error", "CI Lower", "CI Upper")
+    return (Wald.par)
+    
+    # Expected Value of Model TODO
+    # µ = depends on the model (ex. gamma = shape * scale)
+    # Standard Error of Expected value
+    # Se.µ = ???
+    # WALD Confidence Interval for expected value
+    # Wald.µ <- rbind(
+    #     µ,
+    #     µ - qnorm(1-0.05/2) * Se.µ,
+    #     µ + qnorm(1-0.05/2) * Se.µ
+    # )
+}
+
+
+```
+
+
+
+```{r}
+# Wald interval
+h = optnlm$hessian
+invI = solve(h)   ## 
+
+se_sigma2 = sqrt(invI[1,1])
+se_rho = sqrt(invI[2,2])
+print("invI")
+invI
+print("se sigma")
+se_sigma2
+print("se rho")
+se_rho
+
+alpha = 0.05
+
+opts2 = optnlm$estimate[1]
+optrho = optnlm$estimate[2]
+opts2
+optrho
+
+sigma2CI = c(opts2 - qnorm(1-alpha/2)*se_sigma2, opts2, opts2 + qnorm(1-alpha/2)*se_sigma2)
+rhoCI = c(optrho - qnorm(1-alpha/2)*se_rho, optrho, optrho + qnorm(1-alpha/2)*se_rho)
+print("Confidence intervals")
+sigma2CI
+rhoCI
+```
+```{r}
+###PLOT
+sigma2 = seq(10, 17, by = 0.1)
+rho = seq (0.1, 0.5, by = 0.01 )
+
+mat = matrix(nrow = length(sigma2), ncol = length(rho))
+
+for (i in 1:length(sigma2)){
+  for (j in 1:length(rho)){
+    mat[i,j] <- nll_norm(c(sigma2[i],rho[j]),e)
+  }
+}
+
+alpha <- c(0.75,0.5,0.25,0.1,0.05,0.01)
+
+alpha
+#png("C:/Users/bolos/Desktop/MASTER_2019-2020/3rd term/Statistical modelling/R/pic27.png", width=1200, height=900, res=150)
+contour(x = sigma2, y = rho, -mat+optnlm$minimum, levels = 
+          -qchisq(1 - alpha, df = 2) / 2, labels = alpha,
+        xlab = "sigma2", ylab = "rho")
+lines(c(9, 18), c(rhoCI[1],rhoCI[1]), col=3)
+lines(c(9, 18), c(rhoCI[3],rhoCI[3]))
+lines(c(sigma2CI[3],sigma2CI[3]),c(0.1, 0.6))
+lines(c(sigma2CI[1],sigma2CI[1]), c(0.1, 0.6))
+#dev.off()
+sigma2CI
+rhoCI
+
+
+###### how to interpret this ??
+
+```
+# Wald test and like ratio 
+$$z = \frac{\widehat\rho}{se(\widehat\rho)}$$
+
+```{r}
+#mistake with the nll formula, take care of the signs
+L_theta0 = nlminb(c(0.1,0), nll_norm, y = e, lower = c(0.01,0), upper = c(20,0))$objective
+L_theta_hat = opt$objective
+
+lr = 2*log(L_theta0/L_theta_hat)
+q = 2*(L_theta0-L_theta_hat)
+1 - pchisq(q, 2) #wilkxon test: chiq distrib if ho is true
+
+z = (optrho - 0) / se_rho
+1 - pnorm(z, (1-0.05)/2) #normal distributed if ho is true
+
+```
+3.Compare the Information matrix calculated by numerical methods
+with the algebraric form for the Fisher information
+```{r}
+h
+```
+```{r}
+biv_fisher_inf_mat <- function(n, sigma, p) {
+    # Stuff from the book
+    n <- n - 1
+    a <- (n / (sigma ** 2))
+    b <- (-n*p / ((sigma ** 1) * (1 - p ** 2)))
+    c <- (n * (1 + p ** 2) / ((1 - p ** 2) ** 2))
+    return (matrix(c(a, b, b, c), 2, 2))
+}
+fisher_anl <- biv_fisher_inf_mat(length(res), opts2, optrho)
+fisher_num <- h
+
+```
+```{r}
+fisher_anl
+fisher_num
+```
+
+
+```{r}
+```
+
+```{r}
+# 
+# Sigma_opt = matrix(opts2 * c(1,optrho,optrho,1), nrow = 2, ncol = 2)
+# dSigma_sigma2 = matrix(c(1,optrho,optrho,1),nrow = 2)
+# dSigma_rho = matrix(c(0,opts2,opts2,0), nrow = 2)
+# 
+# theo_i11 = 1/2 * sum(diag(solve(Sigma_opt)%*%dSigma_sigma2%*%solve(Sigma_opt)%*%dSigma_sigma2))
+# theo_i12 = 1/2 * sum(diag(solve(Sigma_opt)%*%dSigma_sigma2%*%solve(Sigma_opt)%*%dSigma_rho))
+# theo_i21 = 1/2 * sum(diag(solve(Sigma_opt)%*%dSigma_rho%*%solve(Sigma_opt)%*%dSigma_sigma2))
+# theo_i22 = 1/2 * sum(diag(solve(Sigma_opt)%*%dSigma_rho%*%solve(Sigma_opt)%*%dSigma_rho))
+# 
+# matrix(c(theo_i11,theo_i21,theo_i12,theo_i22), nrow = 2)*n  #--> M2
+```
+
+4. Make a plot of the profile liklihood of p and compare with the quadratic
+approximation. Further using the z-transform (see Exersise 3.23) for
+p and the log-transform for s2, plot the profile likelihood for z and
+compare with the quadratic approximation, finally derive Fishers information
+matrix for the transformed varaibles and compare with the
+numerical Hessian.
+
+```{r}
+# Rho profile likelihood
+rhopll <- function(rho, y){
+  fun.tmp <- function(sigma2, rho, y){
+    nll_norm(c(sigma2,rho),y)
+  }
+  - optimise(fun.tmp, c(10,20), rho = rho, y = y)$objective
+}
+
+rho = seq(0, 0.6, by = 0.01)
+rhoseq = sapply(rho, rhopll, y = e)
+plot(rho, rhoseq-max(rhoseq), type = "l", ylab = "Profile log-likelihood")
+
+#Quadratic approximation
+irho = - hessian(rhopll, optrho, y = e)
+quadra_rhopll <- function(rho){
+  -1/2 * irho * (rho - optrho)^2
+}
+#png("C:/Users/bolos/Desktop/MASTER_2019-2020/3rd term/Statistical modelling/R/pic28.png", width=1200, height=900, res=150)
+plot(rho, rhoseq-max(rhoseq), type = "l", ylab = "Profile log-likelihood")
+lines(rho, quadra_rhopll(rho), type = "l", lty = 2)
+#dev.off()
+#The quadratic approximation is fairly good
+```
+
+5.Estimate the parameters of the AR(1) model (see Example 11.1), first
+conditioning on e1, then full estimation. Compare with the estimation
+above, is it as expected?
+```{r}
+# Estimating AR(1)
+
+#all data
+r = fitlm1$residuals
+nll_ar <- function(theta,y){
+    n <- length(y)
+    n/2 * log(theta[1]) + 1/(2*theta[1]) * sum((y[-1]-theta[2]*y[-n])^2)
+}
+
+opt <- nlminb(c(1,1/2),nll_ar,y=r,lower=c(0.001,-0.999),upper=c(Inf,0.999))
+c("Rho", optrho, opt$par[2])
+c("Sigma2", opts2, opt$par[1])
+
+#conditioning on e1 (not sure)
+
+nll_arcond <- function(theta,y){
+    n <- length(y)
+    n/2 * log(theta[1]) + 1/(2*theta[1]) * sum((y[-1]-theta[2]*y[-n])^2) - 1/2 * log(1-theta[2]^2) + (1-theta[2]^2)/(2*theta[1])*y[1]
+}
+
+opt <- nlminb(c(1,1/2),nll_arcond,y=r,lower=c(0.001,-0.999),upper=c(Inf,0.999))
+c("Rho", optrho, opt$par[2])
+c("Sigma2", opts2, opt$par[1])
+
+acf(r)
+```
+
+6. Estimate the parameters of the linear model (2) and the parameters
+of the AR(1) model simultanious, and compare the likelihood of the
+linear model and the combined model.
+```{r}
+dat$ws30sq <- dat$ws30^2
+xreg <- as.matrix(dat[,c("ws30","ws30sq")])
+fit_ar <- arima(y.trans, c(1,0,0), xreg=xreg)
+
+print(fit_ar)
+confint(fit_ar)
+```
+```{r}
+AIC(fit_ar) #### AR is better
+AIC(fitlm1)
+```
+```{r}
+#png("C:/Users/bolos/Desktop/MASTER_2019-2020/3rd term/Statistical modelling/R/pic29.png", width=1200, height=900, res=150)
+newxreg <- as.matrix(dat[,c("ws30","ws30sq")])
+preds <- predict(fit_ar, newxreg=newxreg)
+preds2 <- predict(fitlm1, dat)
+png("/Users/laurasansc/github/statistical_modelling/plots/wind_bego1.png",width=2700, height=1000, res=300)
+options(repr.plot.width=60, repr.plot.height=6)
+ggplot(data=dat, aes(x = r.day)) +
+  geom_line(alpha=0.8, size=0.3, aes(y = y.trans, colour="True Data")) +
+  geom_line(alpha=0.8, size=0.3, aes(y = preds2, colour="Linear Model")) +
+  geom_line(alpha=0.8, size=0.3, aes(y = preds$pred, colour="Combined Model")) +
+  scale_colour_manual("Models", values = c("red", "green", "blue")) + theme_classic() + theme(legend.position="bottom")
+#dev.off()
+```
+
+7. Discuss the effect fo including the AR(1)-term for short and long term
+preddictions.
+
+```{r}
+dat$err.lin <- preds2 - y.trans
+dat$err.com <- preds$pred - y.trans
+# Long term (whole data)
+lin_long_mae <- sum(abs(dat$err.lin)) / nrow(dat)
+com_long_mae <- sum(abs(dat$err.com)) / nrow(dat)
+print(lin_long_mae)
+print(com_long_mae)
+
+# Short term (3 days)
+lin_short_mae <- sum(abs(dat$err.lin[2:6])) / 3
+com_short_mae <- sum(abs(dat$err.com[2:6])) / 3
+print(lin_short_mae)
+print(com_short_mae)
+```
+
+###########
+```{r}
+
+frame <- data.frame(dat$r.day, round(y.trans))
+names(frame) <- c("day","pow")
+par(mfrow=c(2,2))
+hist(frame$pow, freq = TRUE)
+mean(frame$pow)
+var(frame$pow)
+tab2 = table(frame$pow)
+plot(tab2,axes=FALSE,xlab="Count",ylab="Freq")
+points(-45:45,dpois(-45:45,lambda=mean(frame$pow))*dim(frame)[1],pch=19) #this for normal
+## hence overdispersion
+var_acf <- acf(frame$pow)
+## hence autocorreltaion
+plot(frame$day, frame$pow, type="l")
+
+## First way of obtaining parameters
+x <- frame$pow
+(phi.hat <- acf(x,plot=FALSE)$acf[2]) ## ACF in lag 1
+cor(x[-1],x[-length(x)])
+(sigma <- var(x)*(1-phi.hat^2))
+
+## Second way
+## Likelihood estimation
+nll <- function(theta,y){
+    n <- length(y) - 1
+    n/2 * log(theta[1]) + 1/(2*theta[1]) * sum((y[-1]-theta[2]*y[-(n+1)])^2)
+}
+## MLE
+(opt <- nlminb(c(1,1/2),nll,y=x,lower=c(0.001,-0.999),upper=c(Inf,0.999)))
+
+## standard errors
+library(numDeriv)
+V <- solve(hessian(nll,opt$par,y=x))
+(se <- sqrt(diag(V)))
+
+## Profile likelihood for phi
+llp.phi <- function(phi,x,x0){
+    n <- length(x) - 1
+    -n/2 * log(sum((x[-1]-phi*x[-(n+1)])^2))
+}
+
+## Plot profile likelihood
+phi <- seq(max(opt$par[2]-3*se[2],-1),
+           min(opt$par[2]+3*se[2],1),
+           length=200)
+
+llp <- sapply(phi,llp.phi,x=x[-1],x0)
+
+par(mfrow=c(1,2))
+plot(phi,exp(llp-max(llp)),type="l")
+lines(range(phi),
+      exp(-c(1,1) * qchisq(0.95,df=1)/2),
+          col=2,lty=2)
+
+## Thrid way 
+## Directly in R
+arima(x,order=c(1,0,0))
+opt$par ## rather close. 
+var <- arima(x,order=c(1,0,0))
+## Did it help?
+n <- 288
+e <- x[-1]-opt$par[2]*x[-n]
+acf(e)
+```
